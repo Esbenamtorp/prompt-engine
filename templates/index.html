@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEO Prompt Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0c0c0e;--surface:#141416;--surface2:#1c1c1f;--border:#2a2a2e;
+      --text:#f4f4f5;--muted:#71717a;--accent:#6366f1;--accent-bg:rgba(99,102,241,.12);
+      --green:#22c55e;--yellow:#eab308;--red:#ef4444;
+      --awareness:#a78bfa;--awareness-bg:rgba(167,139,250,.12);
+      --consider:#60a5fa;--consider-bg:rgba(96,165,250,.12);
+      --decision:#34d399;--decision-bg:rgba(52,211,153,.12);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:40px 16px 80px;-webkit-font-smoothing:antialiased}
+    .wrap{max-width:860px;margin:0 auto}
+    .header{text-align:center;margin-bottom:48px}
+    .logo{font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--muted);margin-bottom:20px}
+    .logo span{color:var(--text)}
+    .pill{display:inline-block;background:var(--accent-bg);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;padding:4px 14px;border-radius:999px;margin-bottom:18px}
+    h1{font-size:clamp(28px,5vw,42px);font-weight:700;line-height:1.15;margin-bottom:12px}
+    h1 em{font-style:normal;color:var(--accent)}
+    .sub{color:var(--muted);font-size:15px;line-height:1.6}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:20px}
+    .card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:20px}
+    .row{display:flex;gap:10px;align-items:flex-end}
+    .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+    label{font-size:12px;font-weight:500;color:var(--muted)}
+    input[type="url"]{background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:inherit;font-size:14px;padding:10px 14px;outline:none;transition:border-color .15s;width:100%}
+    input:focus{border-color:var(--accent)}
+    input::placeholder{color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:inherit;font-size:14px;font-weight:600;padding:11px 22px;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap;flex-shrink:0}
+    .btn:hover:not(:disabled){opacity:.88}
+    .btn:active:not(:disabled){transform:scale(.98)}
+    .btn:disabled{opacity:.35;cursor:not-allowed}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .btn-ghost:hover:not(:disabled){background:var(--surface2);opacity:1}
+    .btn-sm{padding:8px 16px;font-size:13px}
+    .status-list{display:flex;flex-direction:column;gap:10px}
+    .s-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+    .s-item.done{color:var(--green)}.s-item.live{color:var(--text)}.s-item.err{color:var(--red)}
+    .s-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+    .spinner{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .err-box{background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px 16px;font-size:13px;color:#fca5a5;margin-bottom:20px}
+    .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+    .meta-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+    .meta-val{font-size:14px;line-height:1.4}
+    .stats-row{display:flex;gap:20px;flex-wrap:wrap;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:20px}
+    .stat{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+    .stat b{color:var(--text);font-weight:600}
+    .stat-dot{width:7px;height:7px;border-radius:50%}
+    .thead{display:grid;grid-template-columns:30px 120px 90px 1fr;gap:14px;padding:6px 14px;border-bottom:1px solid var(--border);margin-bottom:4px}
+    .th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+    .prow{display:grid;grid-template-columns:30px 120px 90px 1fr;gap:14px;align-items:start;padding:11px 14px;border-radius:9px;transition:background .1s}
+    .prow:hover{background:rgba(255,255,255,.03)}
+    .pnum{font-size:12px;color:var(--muted);text-align:right;padding-top:3px}
+    .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:999px;width:fit-content}
+    .ba{background:var(--awareness-bg);color:var(--awareness)}
+    .bc{background:var(--consider-bg);color:var(--consider)}
+    .bd{background:var(--decision-bg);color:var(--decision)}
+    .pri{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding-top:3px}
+    .phi{color:var(--green)}.pme{color:var(--yellow)}
+    .ptext{font-size:14px;font-weight:500;margin-bottom:5px;line-height:1.45}
+    .pratio{font-size:12px;color:var(--muted);line-height:1.45}
+    .actions-row{display:flex;justify-content:flex-end;gap:10px;padding-top:20px;margin-top:16px;border-top:1px solid var(--border)}
+    .footer{text-align:center;margin-top:40px;font-size:12px;color:var(--muted)}
+    .hidden{display:none!important}
+    @media(max-width:600px){.row{flex-direction:column}.thead{display:none}.prow{grid-template-columns:24px 1fr}.prow .stage-col,.prow .pri-col{display:none}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <div class="logo">Powered by <span>3RD</span></div>
+    <div class="pill">AEO &middot; GEO &middot; AI Synlighed</div>
+    <h1>Prompt <em>Engine</em></h1>
+    <p class="sub">Indtast en URL og få de 25 vigtigste prompts til AI-synlighed<br>i ChatGPT, Perplexity, Claude og Gemini</p>
+  </header>
+  <div class="card">
+    <div class="card-label">Analyse</div>
+    <div class="row">
+      <div class="field">
+        <label for="uinput">Website URL</label>
+        <input type="url" id="uinput" placeholder="https://elgiganten.dk" autofocus />
+      </div>
+      <button class="btn" id="run-btn" onclick="run()">Generer prompts &rarr;</button>
+    </div>
+  </div>
+  <div class="card hidden" id="status-card">
+    <div class="card-label">Status</div>
+    <div class="status-list" id="slist"></div>
+  </div>
+  <div class="err-box hidden" id="errbox"></div>
+  <div class="card hidden" id="res-card">
+    <div class="meta-grid" id="meta-grid"></div>
+    <div class="stats-row" id="stats-row"></div>
+    <div class="thead">
+      <div class="th">#</div><div class="th">Stage</div>
+      <div class="th">Prioritet</div><div class="th">Prompt</div>
+    </div>
+    <div id="ptable"></div>
+    <div class="actions-row">
+      <button class="btn btn-ghost btn-sm" onclick="copyAll()">Kopier alle prompts</button>
+      <button class="btn btn-sm" onclick="exportCSV()">&#8595; Download CSV</button>
+    </div>
+  </div>
+  <footer class="footer">Internt vaerktoj &middot; 3RD &nbsp;&middot;&nbsp; Fortroligt</footer>
+</div>
+<script>
+let result=null;
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function setS(id,label,state){const list=document.getElementById('slist');let el=document.getElementById('si-'+id);if(!el){el=document.createElement('div');el.id='si-'+id;list.appendChild(el)}el.className='s-item '+state;el.innerHTML=(state==='live'?'<span class="spinner"></span>':'<span class="s-dot"></span>')+esc(label)}
+const stageMap={awareness:{cls:'ba',icon:'🌱',label:'awareness'},consideration:{cls:'bc',icon:'🔍',label:'consideration'},decision:{cls:'bd',icon:'🎯',label:'decision'}};
+function render(data){
+  result=data;
+  document.getElementById('meta-grid').innerHTML=[['Virksomhed',data.company||'—'],['Domæne',data.domain||'—'],['Branche',data.industry||'—'],['Målgruppe',data.target_audience||'—']].map(([l,v])=>'<div><div class="meta-label">'+esc(l)+'</div><div class="meta-val">'+esc(v)+'</div></div>').join('');
+  const sc={},pc={};
+  (data.prompts||[]).forEach(p=>{sc[p.stage]=(sc[p.stage]||0)+1;pc[p.priority]=(pc[p.priority]||0)+1});
+  document.getElementById('stats-row').innerHTML='<div class="stat"><div class="stat-dot" style="background:var(--awareness)"></div><b>'+(sc.awareness||0)+'</b>&nbsp;awareness</div><div class="stat"><div class="stat-dot" style="background:var(--consider)"></div><b>'+(sc.consideration||0)+'</b>&nbsp;consideration</div><div class="stat"><div class="stat-dot" style="background:var(--decision)"></div><b>'+(sc.decision||0)+'</b>&nbsp;decision</div><div class="stat" style="margin-left:auto"><div class="stat-dot" style="background:var(--green)"></div><b>'+(pc.high||0)+'</b>&nbsp;high</div><div class="stat"><div class="stat-dot" style="background:var(--yellow)"></div><b>'+(pc.medium||0)+'</b>&nbsp;medium</div>';
+  document.getElementById('ptable').innerHTML=(data.prompts||[]).map(p=>{const s=stageMap[p.stage]||{cls:'ba',icon:'?',label:p.stage};const hi=p.priority==='high';return '<div class="prow"><div class="pnum">'+p.id+'</div><div class="stage-col"><span class="badge '+s.cls+'">'+s.icon+' '+s.label+'</span></div><div class="pri-col"><span class="pri '+(hi?'phi':'pme')+'">'+(hi?'●':'○')+' '+p.priority+'</span></div><div><div class="ptext">'+esc(p.prompt)+'</div><div class="pratio">→ '+esc(p.rationale||'')+'</div></div></div>'}).join('');
+  document.getElementById('res-card').classList.remove('hidden');
+  document.getElementById('res-card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function exportCSV(){if(!result)return;const rows=[['#','Prompt','Stage','Priority','Rationale'],...(result.prompts||[]).map(p=>[p.id,p.prompt,p.stage,p.priority,p.rationale||''])];const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));a.download='prompts_'+(result.domain||'export')+'.csv';a.click()}
+function copyAll(){if(!result)return;navigator.clipboard.writeText((result.prompts||[]).map(p=>p.id+'. '+p.prompt).join('\n')).then(()=>{const b=event.target,o=b.textContent;b.textContent='✓ Kopieret!';setTimeout(()=>b.textContent=o,2000)})}
+async function run(){
+  const url=document.getElementById('uinput').value.trim();
+  if(!url)return alert('Indtast en URL');
+  ['res-card','errbox','status-card'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('slist').innerHTML='';
+  document.getElementById('run-btn').disabled=true;
+  document.getElementById('status-card').classList.remove('hidden');
+  setS('req','Crawler og analyserer '+url.replace(/^https?:\/\//,'').slice(0,50)+'…','live');
+  try{
+    const r=await fetch('/api/generate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url}),signal:AbortSignal.timeout(90000)});
+    const data=await r.json();
+    if(!r.ok||data.error)throw new Error(data.error||'Fejl '+r.status);
+    setS('req','✓ '+(data.pages_crawled||1)+' side(r) crawlet · 25 prompts klar for '+(data.company||data.domain),'done');
+    render(data);
+  }catch(e){
+    document.getElementById('errbox').textContent='❌  '+e.message;
+    document.getElementById('errbox').classList.remove('hidden');
+    setS('req','❌ '+e.message,'err');
+  }finally{document.getElementById('run-btn').disabled=false}
+}
+document.getElementById('uinput').addEventListener('keydown',e=>{if(e.key==='Enter')run()});
+</script>
+</body>
+</html>
