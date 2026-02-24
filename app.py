@@ -1,4 +1,5 @@
 import os, re, time, json
+from json_repair import repair_json
 from urllib.parse import urlparse, urljoin
 from flask import Flask, request, jsonify, render_template
 import requests
@@ -141,7 +142,7 @@ def call_claude(context):
         raise Exception(err)
     txt   = resp.json()["content"][0]["text"]
     clean = re.sub(r"^```(?:json)?\s*|\s*```$", "", txt.strip(), flags=re.M)
-    return json.loads(clean)
+        return json.loads(repair_json(clean))
 
 @app.route("/")
 def index():
