@@ -129,7 +129,7 @@ def call_claude(context):
             "content-type": "application/json",
         },
         json={
-            "model": "claude-opus-4-5-20251101",
+                        "model": "claude-haiku-4-5-20251001",
             "max_tokens": 4096,
             "system": SYSTEM,
             "messages": [{"role": "user", "content": USER_TPL.format(context=context)}],
